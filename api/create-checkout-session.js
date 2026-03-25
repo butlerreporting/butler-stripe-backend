@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "https://www.butlerreporting.com");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -34,8 +34,8 @@ export default async function handler(req, res) {
       mode: "payment",
       customer_email: email,
       client_reference_id: invoiceNumber,
-      success_url: "https://www.YOURDOMAIN.com/payment-success",
-      cancel_url: "https://www.YOURDOMAIN.com/pay",
+      success_url: "https://www.butlerreporting.com/payment-success",
+      cancel_url: "https://www.butlerreporting.com/submit-payment",
       metadata: {
         client_name: clientName || "",
         invoice_number: invoiceNumber || "",
