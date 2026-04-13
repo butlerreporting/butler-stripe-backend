@@ -1,26 +1,34 @@
-const Stripe = require('stripe');
+import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).send("Missing STRIPE_SECRET_KEY");
+    }
+
+    if (!process.env.BASE_URL) {
+      return res.status(500).send("Missing BASE_URL");
+    }
+
     const { amount, invoice } = req.query;
 
     if (!amount || Number(amount) <= 0) {
-      return res.status(400).send('Invalid amount.');
+      return res.status(400).send("Invalid amount");
     }
 
     const unitAmount = Math.round(Number(amount) * 100);
 
     const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['us_bank_account'], // 👈 THIS is the magic
+      mode: "payment",
+      payment_method_types: ["us_bank_account"],
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: "usd",
             product_data: {
-              name: 'ACH Invoice Payment',
+              name: "ACH Invoice Payment",
             },
             unit_amount: unitAmount,
           },
@@ -30,14 +38,14 @@ module.exports = async (req, res) => {
       success_url: `${process.env.BASE_URL}/payment-success`,
       cancel_url: `${process.env.BASE_URL}/payment-cancelled`,
       metadata: {
-        invoice_number: invoice || '',
-        payment_method: 'ACH',
+        invoice_number: invoice || "",
+        payment_method: "ACH",
       },
     });
 
     return res.redirect(303, session.url);
   } catch (err) {
-    console.error(err);
-    return res.status(500).send('Error creating checkout session.');
+    console.error("Checkout error:", err);
+    return res.status(500).send(`Error creating checkout session: ${err.message}`);
   }
-};
+}
