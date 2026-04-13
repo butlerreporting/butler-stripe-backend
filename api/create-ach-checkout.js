@@ -1,8 +1,4 @@
-// updated ach checkout esm version
 import Stripe from "stripe";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
   try {
@@ -14,6 +10,7 @@ export default async function handler(req, res) {
       return res.status(500).send("Missing BASE_URL");
     }
 
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const { amount, invoice } = req.query;
 
     if (!amount || Number(amount) <= 0) {
@@ -48,6 +45,8 @@ export default async function handler(req, res) {
     return res.redirect(303, session.url);
   } catch (err) {
     console.error("Checkout error:", err);
-    return res.status(500).send(`Error creating checkout session: ${err.message}`);
+    return res
+      .status(500)
+      .send(`Error creating checkout session: ${err.message}`);
   }
 }
