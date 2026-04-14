@@ -11,7 +11,16 @@ export default async function handler(req, res) {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-    const { amount, invoice } = req.query;
+
+    const { amount, invoice, name } = req.query;
+
+    if (!name || String(name).trim() === "") {
+      return res.status(400).send("Missing payer name");
+    }
+
+    if (!invoice || String(invoice).trim() === "") {
+      return res.status(400).send("Missing invoice number");
+    }
 
     if (!amount || Number(amount) <= 0) {
       return res.status(400).send("Invalid amount");
@@ -27,7 +36,8 @@ export default async function handler(req, res) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "ACH Invoice Payment",
+              name: `Invoice #${invoice} - ${name}`,
+              description: "ACH invoice payment",
             },
             unit_amount: unitAmount,
           },
@@ -37,7 +47,8 @@ export default async function handler(req, res) {
       success_url: `${process.env.BASE_URL}/payment-success`,
       cancel_url: `${process.env.BASE_URL}/payment-cancelled`,
       metadata: {
-        invoice_number: invoice || "",
+        invoice_number: invoice,
+        payer_name: name,
         payment_method: "ACH",
       },
     });
@@ -45,6 +56,8 @@ export default async function handler(req, res) {
     return res.redirect(303, session.url);
   } catch (err) {
     console.error("Checkout error:", err);
-    return res.status(500).send(`Error creating checkout session: ${err.message}`);
+    return res
+      .status(500)
+      .send(`Error creating checkout session: ${err.message}`);
   }
 }
