@@ -12,10 +12,14 @@ export default async function handler(req, res) {
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-    const { amount, invoice, name } = req.query;
+    const { amount, invoice, name, email } = req.query;
 
     if (!name || String(name).trim() === "") {
       return res.status(400).send("Missing payer name");
+    }
+
+    if (!email || String(email).trim() === "") {
+      return res.status(400).send("Missing payer email");
     }
 
     if (!invoice || String(invoice).trim() === "") {
@@ -31,6 +35,8 @@ export default async function handler(req, res) {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["us_bank_account"],
+      customer_email: email,
+      billing_address_collection: "required",
       line_items: [
         {
           price_data: {
@@ -49,6 +55,7 @@ export default async function handler(req, res) {
       metadata: {
         invoice_number: invoice,
         payer_name: name,
+        payer_email: email,
         payment_method: "ACH",
       },
     });
